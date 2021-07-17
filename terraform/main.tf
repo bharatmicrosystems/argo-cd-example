@@ -4,18 +4,19 @@ provider "google" {
   zone    = "us-central1-c"
 }
 
-provider "k8s" {
-  cluster_ca_certificate = module.gke_auth.cluster_ca_certificate
+provider "kubectl" {
   host                   = module.gke_auth.host
+  cluster_ca_certificate = module.gke_auth.cluster_ca_certificate
   token                  = module.gke_auth.token
+  load_config_file       = false
 }
 
 terraform {
   required_version = ">= 0.13"
   required_providers {
-    k8s = {
-      version = ">= 0.8.0"
-      source  = "banzaicloud/k8s"
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.7.0"
     }
   }
   backend "gcs" {
@@ -59,8 +60,12 @@ module "gke_auth" {
   use_private_endpoint = false
 }
 
-module "argo_cd" {
-  source = "runoncloud/argocd/kubernetes"
-  namespace       = "argocd"
-  argo_cd_version = "2.0.4"
+data "kubectl_file_documents" "manifests" {
+    content = file("install.yaml")
+}
+
+resource "kubectl_manifest" "test" {
+    count     = length(data.kubectl_file_documents.manifests.documents)
+    yaml_body = element(data.kubectl_file_documents.manifests.documents, count.index)
+    override_namespace = "argocd"
 }
