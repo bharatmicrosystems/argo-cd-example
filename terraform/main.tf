@@ -76,7 +76,7 @@ resource "kubectl_manifest" "namespace" {
 
 resource "kubectl_manifest" "argocd" {
     depends_on = [
-      resource.kubectl_manifest.namespace
+      kubectl_manifest.namespace,
     ]
     count     = length(data.kubectl_file_documents.argocd.documents)
     yaml_body = element(data.kubectl_file_documents.argocd.documents, count.index)
