@@ -61,11 +61,11 @@ module "gke_auth" {
 }
 
 data "kubectl_file_documents" "namespace" {
-    content = file("../manifests/namespace.yaml")
+    content = file("../manifests/argocd/namespace.yaml")
 } 
 
 data "kubectl_file_documents" "argocd" {
-    content = file("../manifests/install.yaml")
+    content = file("../manifests/argocd/install.yaml")
 }
 
 resource "kubectl_manifest" "namespace" {
