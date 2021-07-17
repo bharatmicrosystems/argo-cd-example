@@ -19,7 +19,7 @@ terraform {
     }
   }
   backend "gcs" {
-    bucket = "argo-cd-backend-<project-id>"
+    bucket = "terraform-backend-<project-id>"
     prefix = "argocd-terraform"
   }
 }
