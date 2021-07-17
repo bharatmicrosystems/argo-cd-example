@@ -60,12 +60,23 @@ module "gke_auth" {
   use_private_endpoint = false
 }
 
-data "kubectl_file_documents" "manifests" {
-    content = file("install.yaml")
+data "kubectl_file_documents" "namespace" {
+    content = file("../namespace.yaml")
+} 
+
+data "kubectl_file_documents" "argocd" {
+    content = file("../install.yaml")
 }
 
-resource "kubectl_manifest" "test" {
-    count     = length(data.kubectl_file_documents.manifests.documents)
-    yaml_body = element(data.kubectl_file_documents.manifests.documents, count.index)
+resource "kubectl_manifest" "namespace" {
+    count     = length(data.kubectl_file_documents.namespace.documents)
+    yaml_body = element(data.kubectl_file_documents.namespace.documents, count.index)
+    override_namespace = "argocd"
+}
+
+resource "kubectl_manifest" "argocd" {
+    depends_on = resource.kubectl_manifest.namespace
+    count     = length(data.kubectl_file_documents.argocd.documents)
+    yaml_body = element(data.kubectl_file_documents.argocd.documents, count.index)
     override_namespace = "argocd"
 }
