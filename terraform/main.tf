@@ -1,16 +1,3 @@
-provider "google" {
-  project = var.project_id
-  region  = "us-central1"
-  zone    = "us-central1-c"
-}
-
-provider "kubectl" {
-  host                   = module.gke_auth.host
-  cluster_ca_certificate = module.gke_auth.cluster_ca_certificate
-  token                  = module.gke_auth.token
-  load_config_file       = false
-}
-
 terraform {
   required_version = ">= 0.13"
   required_providers {
@@ -23,6 +10,12 @@ terraform {
     bucket = "terraform-backend-<project-id>"
     prefix = "argocd-terraform"
   }
+}
+
+provider "google" {
+  project = var.project_id
+  region  = var.region
+  zone    = var.location
 }
 
 resource "google_service_account" "main" {
@@ -60,6 +53,13 @@ module "gke_auth" {
   use_private_endpoint = false
 }
 
+provider "kubectl" {
+  host                   = module.gke_auth.host
+  cluster_ca_certificate = module.gke_auth.cluster_ca_certificate
+  token                  = module.gke_auth.token
+  load_config_file       = false
+}
+
 data "kubectl_file_documents" "namespace" {
     content = file("../manifests/argocd/namespace.yaml")
 } 
@@ -80,5 +80,18 @@ resource "kubectl_manifest" "argocd" {
     ]
     count     = length(data.kubectl_file_documents.argocd.documents)
     yaml_body = element(data.kubectl_file_documents.argocd.documents, count.index)
+    override_namespace = "argocd"
+}
+
+data "kubectl_file_documents" "my-nginx-app" {
+    content = file("../manifests/argocd/my-nginx-app.yaml")
+}
+
+resource "kubectl_manifest" "my-nginx-app" {
+    depends_on = [
+      kubectl_manifest.argocd,
+    ]
+    count     = length(data.kubectl_file_documents.my-nginx-app.documents)
+    yaml_body = element(data.kubectl_file_documents.my-nginx-app.documents, count.index)
     override_namespace = "argocd"
 }
