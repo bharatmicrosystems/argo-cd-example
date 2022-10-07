@@ -38,8 +38,22 @@ resource "google_container_node_pool" "main_spot_nodes" {
   name               = "${var.cluster_name}-node_pool"
   location           = var.location
   cluster            = google_container_cluster.main.name
-  initial_node_count = 3
+
+  initial_node_count = 2
+  
+  autoscaling {
+    min_node_count = 2
+    max_node_count = 4
+  }
+
+  management {
+    auto_repair = true
+  }
+
   node_config {
+    preemptible = true
+    machine_type = "n2-standard-4"
+    
     service_account = google_service_account.main.email
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
