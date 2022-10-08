@@ -91,14 +91,17 @@ data "kubectl_file_documents" "namespace" {
     content = file("../manifests/argocd/namespace.yaml")
 } 
 
+data "http" "argocd" {
+  url = "https://raw.githubusercontent.com/.http-cd/v2.4.14/manifests/ha/install.yaml"
+}
+
 data "kubectl_file_documents" "argocd" {
-    content = file("../manifests/argocd/install.yaml")
+    content = data.http.argocd.response_body
 }
 
 resource "kubectl_manifest" "namespace" {
     count     = length(data.kubectl_file_documents.namespace.documents)
     yaml_body = element(data.kubectl_file_documents.namespace.documents, count.index)
-    override_namespace = "argocd"
 }
 
 resource "kubectl_manifest" "argocd" {
@@ -107,18 +110,5 @@ resource "kubectl_manifest" "argocd" {
     ]
     count     = length(data.kubectl_file_documents.argocd.documents)
     yaml_body = element(data.kubectl_file_documents.argocd.documents, count.index)
-    override_namespace = "argocd"
-}
-
-data "kubectl_file_documents" "my-nginx-app" {
-    content = file("../manifests/argocd/my-nginx-app.yaml")
-}
-
-resource "kubectl_manifest" "my-nginx-app" {
-    depends_on = [
-      kubectl_manifest.argocd,
-    ]
-    count     = length(data.kubectl_file_documents.my-nginx-app.documents)
-    yaml_body = element(data.kubectl_file_documents.my-nginx-app.documents, count.index)
     override_namespace = "argocd"
 }
