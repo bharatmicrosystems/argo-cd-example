@@ -24,23 +24,50 @@ resource "google_service_account" "main" {
 }
 
 resource "google_container_cluster" "main" {
-  name               = "${var.cluster_name}"
+  name     = "${var.cluster_name}"
+  location = var.location
+
+  # We can't create a cluster with no node pool defined, but we want to only use
+  # separately managed node pools. So we create the smallest possible default
+  # node pool and immediately delete it.
+  remove_default_node_pool = true
+  initial_node_count       = 1  
+}
+
+resource "google_container_node_pool" "main_spot_nodes" {
+  name               = "${var.cluster_name}-node_pool"
   location           = var.location
-  initial_node_count = 3
+  cluster            = google_container_cluster.main.name
+
+  initial_node_count = 2
+  
+  autoscaling {
+    min_node_count = 2
+    max_node_count = 4
+  }
+
+  management {
+    auto_repair = true
+  }
+
   node_config {
+    preemptible = true
+    machine_type = "n2-standard-4"
+
     service_account = google_service_account.main.email
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
   }
+  
   timeouts {
-    create = "30m"
-    update = "40m"
+    create = "20m"
+    update = "20m"
   }
 }
 
 resource "time_sleep" "wait_30_seconds" {
-  depends_on = [google_container_cluster.main]
+  depends_on = [google_container_node_pool.main_spot_nodes]
   create_duration = "30s"
 }
 
@@ -64,14 +91,17 @@ data "kubectl_file_documents" "namespace" {
     content = file("../manifests/argocd/namespace.yaml")
 } 
 
+data "http" "argocd" {
+  url = "https://raw.githubusercontent.com/.http-cd/v2.4.14/manifests/ha/install.yaml"
+}
+
 data "kubectl_file_documents" "argocd" {
-    content = file("../manifests/argocd/install.yaml")
+    content = data.http.argocd.response_body
 }
 
 resource "kubectl_manifest" "namespace" {
     count     = length(data.kubectl_file_documents.namespace.documents)
     yaml_body = element(data.kubectl_file_documents.namespace.documents, count.index)
-    override_namespace = "argocd"
 }
 
 resource "kubectl_manifest" "argocd" {
@@ -80,18 +110,5 @@ resource "kubectl_manifest" "argocd" {
     ]
     count     = length(data.kubectl_file_documents.argocd.documents)
     yaml_body = element(data.kubectl_file_documents.argocd.documents, count.index)
-    override_namespace = "argocd"
-}
-
-data "kubectl_file_documents" "my-nginx-app" {
-    content = file("../manifests/argocd/my-nginx-app.yaml")
-}
-
-resource "kubectl_manifest" "my-nginx-app" {
-    depends_on = [
-      kubectl_manifest.argocd,
-    ]
-    count     = length(data.kubectl_file_documents.my-nginx-app.documents)
-    yaml_body = element(data.kubectl_file_documents.my-nginx-app.documents, count.index)
     override_namespace = "argocd"
 }
