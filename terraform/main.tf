@@ -53,11 +53,16 @@ resource "google_container_node_pool" "main_spot_nodes" {
   node_config {
     preemptible = true
     machine_type = "n2-standard-4"
-    
+
     service_account = google_service_account.main.email
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
+  }
+  
+  timeouts {
+    create = "20m"
+    update = "20m"
   }
 }
 
