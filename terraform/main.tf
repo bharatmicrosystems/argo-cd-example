@@ -39,10 +39,10 @@ resource "google_container_node_pool" "main_spot_nodes" {
   location           = var.location
   cluster            = google_container_cluster.main.name
 
-  initial_node_count = 2
+  initial_node_count = 3
   
   autoscaling {
-    min_node_count = 2
+    min_node_count = 3
     max_node_count = 4
   }
 
