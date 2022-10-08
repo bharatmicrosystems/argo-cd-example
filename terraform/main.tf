@@ -92,7 +92,7 @@ data "kubectl_file_documents" "namespace" {
 } 
 
 data "http" "argocd" {
-  url = "https://raw.githubusercontent.com/.http-cd/v2.4.14/manifests/ha/install.yaml"
+  url = "https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.14/manifests/ha/install.yaml"
 }
 
 data "kubectl_file_documents" "argocd" {
