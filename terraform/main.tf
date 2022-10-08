@@ -48,6 +48,7 @@ resource "google_container_node_pool" "main_spot_nodes" {
 
   management {
     auto_repair = true
+    auto_upgrade = true
   }
 
   node_config {
