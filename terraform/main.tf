@@ -39,11 +39,11 @@ resource "google_container_node_pool" "main_spot_nodes" {
   location           = var.location
   cluster            = google_container_cluster.main.name
 
-  initial_node_count = 3
+  initial_node_count = 2
   
   autoscaling {
-    min_node_count = 3
-    max_node_count = 4
+    min_node_count = 2
+    max_node_count = 3
   }
 
   management {
@@ -53,7 +53,7 @@ resource "google_container_node_pool" "main_spot_nodes" {
 
   node_config {
     preemptible = true
-    machine_type = "n2-standard-4"
+    machine_type = "e2-highmem-2"
 
     service_account = google_service_account.main.email
     oauth_scopes = [
@@ -93,7 +93,7 @@ data "kubectl_file_documents" "namespace" {
 } 
 
 data "http" "argocd" {
-  url = "https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.14/manifests/ha/install.yaml"
+  url = "https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.14/manifests/install.yaml"
 }
 
 data "kubectl_file_documents" "argocd" {
