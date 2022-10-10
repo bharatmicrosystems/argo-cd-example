@@ -11,6 +11,12 @@ jobs:
     - name: Install Terraform
       id: install-terraform
       run: wget -O terraform.zip https://releases.hashicorp.com/terraform/0.15.3/terraform_0.15.3_linux_amd64.zip && unzip terraform.zip && chmod +x terraform && sudo mv terraform /usr/local/bin
+    - name: Kustomize Build
+      uses: karancode/kustomize-github-action@master   
+      with:
+        kustomize_version: '4.5.7'
+        kustomize_build_dir: 'manifests/argocd'
+        kustomize_output_file: "manifests/install-argocd.yaml"
     - name: Apply Terraform
       id: apply-terraform
       run: sed -i "s/<project-id>/${{ secrets.PROJECT_ID }}/g" main.tf && terraform init && terraform apply -auto-approve -var="project_id=${{ secrets.PROJECT_ID  }}"

@@ -88,26 +88,32 @@ provider "kubectl" {
   load_config_file       = false
 }
 
-data "kubectl_file_documents" "namespace" {
-    content = file("../manifests/argocd/namespace.yaml")
+data "kubectl_file_documents" "namespaces" {
+    content = file("../manifests/namespaces.yaml")
 } 
 
-data "http" "argocd" {
-  url = "https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.14/manifests/install.yaml"
-}
+data "kubectl_file_documents" "certs" {
+    content = file("../manifests/certs.yaml")
+} 
 
 data "kubectl_file_documents" "argocd" {
-    content = data.http.argocd.response_body
+    content = file("../manifests/install-argocd.yaml")
+} 
+
+resource "kubectl_manifest" "namespaces" {
+    count     = length(data.kubectl_file_documents.namespaces.documents)
+    yaml_body = element(data.kubectl_file_documents.namespaces.documents, count.index)
 }
 
-resource "kubectl_manifest" "namespace" {
-    count     = length(data.kubectl_file_documents.namespace.documents)
-    yaml_body = element(data.kubectl_file_documents.namespace.documents, count.index)
+resource "kubectl_manifest" "certs" {
+    count     = length(data.kubectl_file_documents.certs.documents)
+    yaml_body = element(data.kubectl_file_documents.certs.documents, count.index)
 }
 
 resource "kubectl_manifest" "argocd" {
     depends_on = [
-      kubectl_manifest.namespace,
+      kubectl_manifest.namespaces,
+      kubectl_manifest.certs
     ]
     count     = length(data.kubectl_file_documents.argocd.documents)
     yaml_body = element(data.kubectl_file_documents.argocd.documents, count.index)

@@ -1,0 +1,17 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: managed-cert
+spec:
+  domains:
+    - pauljs.io
+    - www.pauljs.io
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  namespace: argocd
+  name: managed-cert
+spec:
+  domains:
+    - cd.pauljs.io

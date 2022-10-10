@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- https://github.com/argoproj/argo-cd//manifests/base/?ref=v2.4.14
+- ./ingress.yaml
+patchesJson6902:
+  - target:
+      kind: Deployment
+      version: v1
+      name: argocd-server
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/command
+        value: ["argocd-server", "--insecure"]
