@@ -8,7 +8,6 @@ patchesJson6902:
       kind: Deployment
       version: v1
       name: argocd-server
-      namespace: argocd
     patch: |-
       - op: replace
         path: /spec/template/spec/containers/0/command
@@ -17,7 +16,6 @@ patchesJson6902:
       kind: Service
       version: v1
       name: argocd-server
-      namespace: argocd
     patch: |-
       - op: replace
         path: /spec/type
